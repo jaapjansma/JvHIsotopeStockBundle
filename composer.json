@@ -1,0 +1,21 @@
+{
+  "name":"jvh/isotope-stock-bundle",
+  "description":"Isotope Stock (Jan van Haasteren Specifics).",
+  "type": "contao-bundle",
+  "license":"AGPL-3.0-or-later",
+  "version": "1.0.0",
+  "require": {
+    "contao/core-bundle": "^4.9",
+    "isotope/isotope-core": "^2.6",
+    "krabo/isotope-stock-bundle": "^1.0.0",
+    "symfony/form": "4.4.*"
+  },
+  "extra": {
+    "contao-manager-plugin": "JvH\\JvHIsotopeStockBundle\\ContaoManager\\Plugin"
+  },
+  "autoload": {
+    "psr-4": {
+      "JvH\\JvHIsotopeStockBundle\\": "src/"
+    }
+  }
+}

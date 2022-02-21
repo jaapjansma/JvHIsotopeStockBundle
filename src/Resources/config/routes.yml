@@ -1,0 +1,3 @@
+jvh-isotope-stock-bundle.controller:
+  resource: '@JvHIsotopeStockBundle/Controller'
+  type: annotation
