@@ -4,3 +4,4 @@ services:
     autoconfigure: true
 
   JvH\JvHIsotopeStockBundle\Controller\BookingController: ~
+  JvH\JvHIsotopeStockBundle\EventListener\BookingListener: ~
