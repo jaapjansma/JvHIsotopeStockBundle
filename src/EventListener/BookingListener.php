@@ -72,11 +72,15 @@ class BookingListener implements EventSubscriberInterface {
       $objProduct = Product::findByPk($bookingModel->product_id);
       if ($objProduct) {
         $objEmail = new Email();
-        $objEmail->from = $GLOBALS['TL_ADMIN_EMAIL'];
-        $objEmail->fromName = $GLOBALS['TL_ADMIN_NAME'];
+        $objEmail->from = $GLOBALS['TL_CONFIG']['adminEmail'] ?? 'info@jvh-puzzels.nl';
+        $objEmail->fromName = $GLOBALS['TL_CONFIG']['websiteTitle'] ?? 'Jan van Haasteren puzzels';
         $objEmail->subject = $objProduct->name . ' is niet meer te bestellen';
         $objEmail->text = $objProduct->name . ' (' . $objProduct->sku . ') is niet meer te bestellen';
-        $objEmail->sendTo($GLOBALS['TL_ADMIN_EMAIL']);
+        try {
+          $objEmail->sendTo($GLOBALS['TL_CONFIG']['adminEmail'] ?? 'info@jvh-puzzels.nl');
+        } catch (\Exception $ex) {
+          // Do nothing.
+        }
       }
     }
   }
