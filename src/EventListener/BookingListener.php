@@ -30,6 +30,8 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 class BookingListener implements EventSubscriberInterface {
 
+  private static $alreadyNotifiedProducts = [];
+
   /**
    * Returns an array of event names this subscriber wants to listen to.
    *
@@ -68,18 +70,18 @@ class BookingListener implements EventSubscriberInterface {
   }
 
   private function checkStock(BookingModel $bookingModel) {
-    if (!ProductHelper::isProductAvailableToOrder($bookingModel->product_id)) {
+    if (!ProductHelper::isProductAvailableToOrder($bookingModel->product_id) && !in_array($bookingModel->product_id, static::$alreadyNotifiedProducts)) {
       $objProduct = Product::findByPk($bookingModel->product_id);
       if ($objProduct) {
-        $objEmail = new Email();
-        $objEmail->from = $GLOBALS['TL_CONFIG']['adminEmail'] ?? 'info@jvh-puzzels.nl';
-        $objEmail->fromName = $GLOBALS['TL_CONFIG']['websiteTitle'] ?? 'Jan van Haasteren puzzels';
-        $objEmail->subject = $objProduct->name . ' is niet meer te bestellen';
-        $objEmail->text = $objProduct->name . ' (' . $objProduct->sku . ') is niet meer te bestellen';
-        try {
-          $objEmail->sendTo($GLOBALS['TL_CONFIG']['adminEmail'] ?? 'info@jvh-puzzels.nl');
-        } catch (\Exception $ex) {
-          // Do nothing.
+        static::$alreadyNotifiedProducts[] = $bookingModel->product_id;
+        $objNotificationCollection = \NotificationCenter\Model\Notification::findBy('type', 'jvh_isotope_product_out_of_stock');
+        $arrTokens = [];
+        $arrTokens['product_name'] = $objProduct->name;
+        $arrTokens['product_sku'] = $objProduct->sku;
+        if (NULL !== $objNotificationCollection) {
+          foreach($objNotificationCollection as $objNotification) {
+            $objNotification->send($arrTokens);
+          }
         }
       }
     }
