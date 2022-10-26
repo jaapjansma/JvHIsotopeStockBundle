@@ -21,7 +21,10 @@ namespace JvH\JvHIsotopeStockBundle\EventListener;
 use Contao\Email;
 use Contao\System;
 use Isotope\Model\Product;
+use Krabo\IsotopePackagingSlipBundle\Model\IsotopePackagingSlipModel;
+use Krabo\IsotopePackagingSlipBundle\Model\IsotopePackagingSlipProductCollectionModel;
 use Krabo\IsotopeStockBundle\Event\BookingEvent;
+use Krabo\IsotopeStockBundle\Event\ClearBookingEvent;
 use Krabo\IsotopeStockBundle\Event\Events;
 use Krabo\IsotopeStockBundle\Event\ManualBookingEvent;
 use Krabo\IsotopeStockBundle\Helper\ProductHelper;
@@ -57,16 +60,46 @@ class BookingListener implements EventSubscriberInterface {
   public static function getSubscribedEvents() {
     return [
       Events::BOOKING_EVENT => 'onBooking',
-      Events::MANUAL_BOOKING_EVENT => 'onManualBooking'
+      Events::MANUAL_BOOKING_EVENT => 'onManualBooking',
+      Events::CLEAR_BOOKING_EVENT => 'onClearBooking',
     ];
   }
 
+  public function onClearBooking(ClearBookingEvent $event) {
+    if (!empty($event->productId)) {
+      static::disableNotificationForProduct($event->productId);
+    }
+
+    if (isset($event->extraData['packaging_slip_id'])) {
+      $packagingSlipProducts = IsotopePackagingSlipProductCollectionModel::findBy('pid', $event->extraData['packaging_slip_id']);
+      if ($packagingSlipProducts) {
+        while ($packagingSlipProducts->next()) {
+          static::disableNotificationForProduct($packagingSlipProducts->product_id);
+        }
+      }
+    }
+  }
+
   public function onBooking(BookingEvent $event) {
-    $this->checkStock($event->bookingModel);
+    if ($event->bookingModel->type == BookingModel::SALES_TYPE) {
+      $this->checkStock($event->bookingModel);
+    }
   }
 
   public function onManualBooking(ManualBookingEvent $event) {
-    $this->checkStock($event->bookingModel);
+    if ($event->bookingModel->type == BookingModel::SALES_TYPE) {
+      $this->checkStock($event->bookingModel);
+    }
+  }
+
+  /**
+   * @param int $productId
+   * @return void
+   */
+  private static function disableNotificationForProduct(int $productId) {
+    if (!ProductHelper::isProductAvailableToOrder($productId) && !in_array($productId, static::$alreadyNotifiedProducts)) {
+      static::$alreadyNotifiedProducts[] = $productId;
+    }
   }
 
   private function checkStock(BookingModel $bookingModel) {
