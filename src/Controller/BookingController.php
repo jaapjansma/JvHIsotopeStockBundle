@@ -175,7 +175,7 @@ class BookingController extends AbstractController
           $booking = new BookingModel();
           $booking->description = $data['description'];
           $booking->date = $data['date']->getTimestamp();
-          $booking->period = $data['period_id']->id;
+          $booking->period_id = $data['period_id']->id;
           $booking->product_id = $product->id;
           $booking->type = $type['type'];
           $booking->save();
@@ -190,19 +190,16 @@ class BookingController extends AbstractController
           $creditBookingLine->pid = $booking->id;
           $creditBookingLine->save();
           if ($type['is_pre_order_delivery']) {
-            $preOrderedQuantity = abs(ProductHelper::getProductCountPerAccount($product->id, $config['pre_order_sales_account_id']));
-            if ($preOrderedQuantity) {
-              $preOrderDebitBookingLine = new BookingLineModel();
-              $preOrderDebitBookingLine->debit = $preOrderedQuantity;
-              $preOrderDebitBookingLine->account = $config['pre_order_sales_account_id'];
-              $preOrderDebitBookingLine->pid = $booking->id;
-              $preOrderDebitBookingLine->save();
-              $preOrderCreditBookingLine = new BookingLineModel();
-              $preOrderCreditBookingLine->credit = $preOrderedQuantity;
-              $preOrderCreditBookingLine->account = $config['sales_account_id'];
-              $preOrderCreditBookingLine->pid = $booking->id;
-              $preOrderCreditBookingLine->save();
-            }
+            \Database::getInstance()->prepare("
+                UPDATE `tl_isotope_stock_booking_line` `line` 
+                INNER JOIN `tl_isotope_stock_booking` `booking`
+                SET `line`.`account` = ?
+                WHERE `line`.`account` = ?
+                AND `booking`.`product_id` = ?
+                AND `booking`.`period_id` = ?
+            ")->execute($config['sales_account_id'], $config['pre_order_sales_account_id'], $product->id, $data['period_id']->id);
+            $product->isostock_preorder = '0';
+            $product->save();
           }
           BookingHelper::updateBalanceStatusForBooking($booking->id);
 
