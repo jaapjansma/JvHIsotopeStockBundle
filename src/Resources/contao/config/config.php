@@ -16,6 +16,8 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+$GLOBALS['ISO_HOOKS']['generateProductList'][] = [\JvH\JvHIsotopeStockBundle\EventListener\ProductCollectionListener::class, 'generateProductList'];
+
 $GLOBALS['NOTIFICATION_CENTER']['NOTIFICATION_TYPE']['jvh_isotope_stock_bundle']['jvh_isotope_product_out_of_stock']['recipients'] = [];
 $GLOBALS['NOTIFICATION_CENTER']['NOTIFICATION_TYPE']['jvh_isotope_stock_bundle']['jvh_isotope_product_out_of_stock']['email_text'] = array(
   'product_name',
