@@ -219,6 +219,7 @@ class BookingController extends AbstractController
     $templateData = [
       'title' => $GLOBALS['TL_LANG']['tl_isotope_stock_booking']['new_mass_booking'],
       'form' => $form->createView(),
+      'product_sku_url' => $this->generateUrl('tl_isotope_stock_booking_product_sku'),
     ];
     $content = $this->twig->render('@JvHIsotopeStock/tl_isotope_stock_booking_mass_booking.html.twig', $templateData);
     $response->setContent($content);
