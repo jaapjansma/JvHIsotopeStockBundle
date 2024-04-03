@@ -167,6 +167,7 @@ class BookingController extends AbstractController
     $form = $formBuilder->getForm();
     $form->handleRequest($request);
     if ($form->isSubmitted() && $form->isValid()) {
+      $insertIds = [];
       $data = $form->getData();
       $type = $types[$data['type']];
       foreach($data['product_ids'] as $product_id) {
@@ -189,25 +190,11 @@ class BookingController extends AbstractController
           $creditBookingLine->account = $type['credit_id'];
           $creditBookingLine->pid = $booking->id;
           $creditBookingLine->save();
-          if ($type['is_pre_order_delivery']) {
-            \Database::getInstance()->prepare("
-                UPDATE `tl_isotope_stock_booking_line` `line` 
-                INNER JOIN `tl_isotope_stock_booking` `booking`
-                SET `line`.`account` = ?
-                WHERE `line`.`account` = ?
-                AND `booking`.`product_id` = ?
-                AND `booking`.`period_id` = ?
-            ")->execute($config['sales_account_id'], $config['pre_order_sales_account_id'], $product->id, $data['period_id']->id);
-            $product->isostock_preorder = '0';
-            $product->save();
-          }
-          BookingHelper::updateBalanceStatusForBooking($booking->id);
-
-          $event = new ManualBookingEvent($booking);
-          System::getContainer()
-            ->get('event_dispatcher')
-            ->dispatch($event, Events::MANUAL_BOOKING_EVENT);
+          $insertIds[] = "(" . $booking->id . ")";
         }
+      }
+      if (count($insertIds)) {
+          \Database::getInstance()->execute("INSERT INTO `tl_isotope_stock_booking_event` (`booking_id`) VALUES " . implode(", ", $insertIds));
       }
       $url = $this->generateUrl('contao_backend', ['do' => 'tl_isotope_stock_booking']);
       return new RedirectResponse($url);

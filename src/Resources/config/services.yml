@@ -5,3 +5,4 @@ services:
 
   JvH\JvHIsotopeStockBundle\Controller\BookingController: ~
   JvH\JvHIsotopeStockBundle\EventListener\BookingListener: ~
+  JvH\JvHIsotopeStockBundle\Cron\CheckBookingEvents: ~
