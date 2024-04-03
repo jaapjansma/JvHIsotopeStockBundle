@@ -48,7 +48,7 @@ class CheckBookingEvents
         $types = $config['mass_booking_config'];
         /** @var Database $db */
         $db = System::importStatic('Database');
-        $objResult = $db->execute("SELECT * FROM `tl_isotope_stock_booking_event` LIMIT 0, 1");
+        $objResult = $db->execute("SELECT * FROM `tl_isotope_stock_jvh_booking_event` LIMIT 0, 1");
         $ids = [];
         while($objResult->next()) {
             $ids[] = $objResult->id;
@@ -81,7 +81,7 @@ class CheckBookingEvents
                 ->dispatch($event, Events::MANUAL_BOOKING_EVENT);
         }
         if (count($ids)) {
-            $sql = "DELETE FROM `tl_isotope_stock_booking_event` WHERE `id` IN (" . implode(", ", $ids) . ")";
+            $sql = "DELETE FROM `tl_isotope_stock_jvh_booking_event` WHERE `id` IN (" . implode(", ", $ids) . ")";
             $db->execute($sql);
         }
     }

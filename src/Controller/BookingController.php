@@ -194,7 +194,7 @@ class BookingController extends AbstractController
         }
       }
       if (count($insertIds)) {
-          \Database::getInstance()->execute("INSERT INTO `tl_isotope_stock_booking_event` (`booking_id`) VALUES " . implode(", ", $insertIds));
+          \Database::getInstance()->execute("INSERT INTO `tl_isotope_stock_jvh_booking_event` (`booking_id`) VALUES " . implode(", ", $insertIds));
       }
       $url = $this->generateUrl('contao_backend', ['do' => 'tl_isotope_stock_booking']);
       return new RedirectResponse($url);

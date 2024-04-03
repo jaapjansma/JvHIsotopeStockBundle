@@ -16,7 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-$GLOBALS['TL_DCA']['tl_isotope_stock_booking_event'] = array
+$GLOBALS['TL_DCA']['tl_isotope_stock_jvh_booking_event'] = array
 (
     // Config
     'config' => array
