@@ -190,11 +190,11 @@ class BookingController extends AbstractController
           $creditBookingLine->account = $type['credit_id'];
           $creditBookingLine->pid = $booking->id;
           $creditBookingLine->save();
-          $insertIds[] = "(" . $booking->id . ")";
+          $insertIds[] = "(" . $booking->id . ", " . time() .")";
         }
       }
       if (count($insertIds)) {
-          \Database::getInstance()->execute("INSERT INTO `tl_isotope_stock_jvh_booking_event` (`booking_id`) VALUES " . implode(", ", $insertIds));
+          \Database::getInstance()->execute("INSERT INTO `tl_isotope_stock_jvh_booking_event` (`booking_id`, `tstamp`) VALUES " . implode(", ", $insertIds));
       }
       $url = $this->generateUrl('contao_backend', ['do' => 'tl_isotope_stock_booking']);
       return new RedirectResponse($url);
