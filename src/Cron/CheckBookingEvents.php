@@ -54,6 +54,9 @@ class CheckBookingEvents
             $ids[] = $objResult->id;
             $booking = BookingModel::findByPk($objResult->booking_id);
             $product = Product::findByPk($booking->product_id);
+            if ($product === null) {
+              continue;
+            }
             $type = null;
             foreach($types as $t) {
                 if ($t['type'] == $booking->type) {
