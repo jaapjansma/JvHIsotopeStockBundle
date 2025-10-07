@@ -42,8 +42,11 @@ class CheckBookingEvents
     $contaoFramework->initialize();
   }
 
-  public function __invoke(): void
+  public function __invoke($cronType=null): void
   {
+    if ($cronType=='web') {
+      return;
+    }
     $config = System::getContainer()->getParameter('jvh.jvh_isotope_stock.config');
     $types = $config['mass_booking_config'];
     /** @var Database $db */
