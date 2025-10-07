@@ -34,58 +34,62 @@ use Krabo\IsotopeStockBundle\Model\BookingModel;
 class CheckBookingEvents
 {
 
-    /**
-     * @param \Contao\CoreBundle\Framework\ContaoFramework $contaoFramework
-     */
-    public function __construct(ContaoFramework $contaoFramework)
-    {
-        $contaoFramework->initialize();
-    }
+  /**
+   * @param \Contao\CoreBundle\Framework\ContaoFramework $contaoFramework
+   */
+  public function __construct(ContaoFramework $contaoFramework)
+  {
+    $contaoFramework->initialize();
+  }
 
-    public function __invoke(): void
-    {
-        $config = System::getContainer()->getParameter('jvh.jvh_isotope_stock.config');
-        $types = $config['mass_booking_config'];
-        /** @var Database $db */
-        $db = System::importStatic('Database');
-        $objResult = $db->execute("SELECT * FROM `tl_isotope_stock_jvh_booking_event` LIMIT 0, 1");
-        $ids = [];
-        while($objResult->next()) {
-            $ids[] = $objResult->id;
-            $booking = BookingModel::findByPk($objResult->booking_id);
-            $product = Product::findByPk($booking->product_id);
-            if ($product === null) {
-              continue;
-            }
-            $type = null;
-            foreach($types as $t) {
-                if ($t['type'] == $booking->type) {
-                    $type = $t;
-                    break;
-                }
-            }
+  public function __invoke(): void
+  {
+    $config = System::getContainer()->getParameter('jvh.jvh_isotope_stock.config');
+    $types = $config['mass_booking_config'];
+    /** @var Database $db */
+    $db = System::importStatic('Database');
+    $db->execute("DELETE FROM `tl_isotope_stock_jvh_booking_event` WHERE booking_id NOT IN (SELECT id FROM `tl_isotope_stock_booking`); ");
+    $objResult = $db->execute("SELECT * FROM `tl_isotope_stock_jvh_booking_event` LIMIT 0, 1");
+    $ids = [];
+    while($objResult->next()) {
+      $ids[] = $objResult->id;
+      $booking = BookingModel::findByPk($objResult->booking_id);
+      if ($booking === null) {
+        continue;
+      }
+      $product = Product::findByPk($booking->product_id);
+      if ($product === null) {
+        continue;
+      }
+      $type = null;
+      foreach($types as $t) {
+        if ($t['type'] == $booking->type) {
+          $type = $t;
+          break;
+        }
+      }
 
-            if ($type['is_pre_order_delivery']) {
-                \Database::getInstance()->prepare("
+      if (isset($type['is_pre_order_delivery']) && $type['is_pre_order_delivery']) {
+        \Database::getInstance()->prepare("
                     UPDATE `tl_isotope_stock_booking_line` `line` 
-                    INNER JOIN `tl_isotope_stock_booking` `booking`
+                    INNER JOIN `tl_isotope_stock_booking` `booking` ON `booking`.`id` = `line`.`pid`
                     SET `line`.`account` = ?
                     WHERE `line`.`account` = ?
                     AND `booking`.`product_id` = ?
                     AND `booking`.`period_id` = ?
                 ")->execute($config['sales_account_id'], $config['pre_order_sales_account_id'], $product->id, $booking->period_id);
-                $product->isostock_preorder = '0';
-                $product->save();
-            }
-            BookingHelper::updateBalanceStatusForBooking($booking->id);
-            $event = new ManualBookingEvent($booking);
-            System::getContainer()
-                ->get('event_dispatcher')
-                ->dispatch($event, Events::MANUAL_BOOKING_EVENT);
-        }
-        if (count($ids)) {
-            $sql = "DELETE FROM `tl_isotope_stock_jvh_booking_event` WHERE `id` IN (" . implode(", ", $ids) . ")";
-            $db->execute($sql);
-        }
+        $product->isostock_preorder = '0';
+        $product->save();
+      }
+      BookingHelper::updateBalanceStatusForBooking($booking->id);
+      $event = new ManualBookingEvent($booking);
+      System::getContainer()
+        ->get('event_dispatcher')
+        ->dispatch($event, Events::MANUAL_BOOKING_EVENT);
     }
+    if (count($ids)) {
+      $sql = "DELETE FROM `tl_isotope_stock_jvh_booking_event` WHERE `id` IN (" . implode(", ", $ids) . ")";
+      $db->execute($sql);
+    }
+  }
 }
