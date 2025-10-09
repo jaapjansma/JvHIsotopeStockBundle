@@ -103,17 +103,21 @@ class BookingListener implements EventSubscriberInterface {
   }
 
   private function checkStock(BookingModel $bookingModel) {
-    if (!ProductHelper::isProductAvailableToOrder($bookingModel->product_id) && !in_array($bookingModel->product_id, static::$alreadyNotifiedProducts)) {
-      $objProduct = Product::findByPk($bookingModel->product_id);
-      if ($objProduct) {
-        static::$alreadyNotifiedProducts[] = $bookingModel->product_id;
-        $objNotificationCollection = \NotificationCenter\Model\Notification::findBy('type', 'jvh_isotope_product_out_of_stock');
-        $arrTokens = [];
-        $arrTokens['product_name'] = $objProduct->name;
-        $arrTokens['product_sku'] = $objProduct->sku;
-        if (NULL !== $objNotificationCollection) {
-          foreach($objNotificationCollection as $objNotification) {
-            $objNotification->send($arrTokens);
+    /** @var Product $objProduct */
+    $objProduct = Product::findByPk($bookingModel->product_id);
+    if ($objProduct && $objProduct->isPublished()) {
+      if (!ProductHelper::isProductAvailableToOrder($bookingModel->product_id) && !in_array($bookingModel->product_id, static::$alreadyNotifiedProducts)) {
+        $objProduct = Product::findByPk($bookingModel->product_id);
+        if ($objProduct) {
+          static::$alreadyNotifiedProducts[] = $bookingModel->product_id;
+          $objNotificationCollection = \NotificationCenter\Model\Notification::findBy('type', 'jvh_isotope_product_out_of_stock');
+          $arrTokens = [];
+          $arrTokens['product_name'] = $objProduct->name;
+          $arrTokens['product_sku'] = $objProduct->sku;
+          if (NULL !== $objNotificationCollection) {
+            foreach ($objNotificationCollection as $objNotification) {
+              $objNotification->send($arrTokens);
+            }
           }
         }
       }
